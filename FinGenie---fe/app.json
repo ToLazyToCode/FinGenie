@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "FinGenie",
+    "slug": "fingenie",
+    "owner": "trongph22",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "fingenie",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6B4EFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "fingenie.com.fingenie"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6B4EFF"
+      },
+      "package": "fingenie.com.fingenie",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "fingenie",
+              "host": "*",
+              "pathPrefix": "/redirect"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-dev-client",
+      "expo-notifications",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "16781854-13bd-436a-bf73-7592132c5bc9"
+      }
+    }
+  }
+}
