@@ -17,6 +17,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,15 +56,17 @@ public class TransactionController {
     @GetMapping
     @Operation(
         summary = "Get all transactions",
-        description = "Returns all transactions for the authenticated user, ordered by date descending."
+        description = "Returns paginated transactions for the authenticated user, ordered by date descending. " +
+                     "Use ?page=0&size=20&sort=transactionDate,desc for pagination."
     )
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "List of transactions returned",
-            content = @Content(array = @ArraySchema(schema = @Schema(implementation = TransactionResponse.class)))),
+        @ApiResponse(responseCode = "200", description = "Page of transactions returned"),
         @ApiResponse(responseCode = "401", description = "Not authenticated")
     })
-    public List<TransactionResponse> getAll() {
-        return transactionService.getAll();
+    public Page<TransactionResponse> getAll(
+        @PageableDefault(size = 20, sort = "transactionDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable
+    ) {
+        return transactionService.getAll(pageable);
     }
 
     @GetMapping("/suggestions/today")

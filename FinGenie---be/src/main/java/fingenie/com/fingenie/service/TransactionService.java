@@ -15,6 +15,8 @@ import fingenie.com.fingenie.dto.TransactionRequest;
 import fingenie.com.fingenie.dto.TransactionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -110,7 +112,18 @@ public class TransactionService {
     }
 
     /**
-     * Get all transactions for current user.
+     * Get all transactions for current user (paginated).
+     * OSIV-SAFE: Uses EntityGraph query, maps to DTOs within transaction.
+     */
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> getAll(Pageable pageable) {
+        Account account = SecurityUtils.getCurrentAccount();
+        return transactionRepository.findByAccount(account, pageable)
+                .map(this::mapToResponse);
+    }
+
+    /**
+     * Get all transactions for current user (unpaginated, for internal use).
      * OSIV-SAFE: Uses EntityGraph query, maps to DTOs within transaction.
      */
     @Transactional(readOnly = true)

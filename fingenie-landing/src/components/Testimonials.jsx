@@ -1,123 +1,88 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
-export default function Testimonials({ active }) {
-  const testimonialsRef = useRef(null);
+const testimonials = [
+  {
+    quote: "FinGenie's AI advisor helped me find $400/month in unnecessary spending I didn't even know about. Game changer.",
+    name: "Sarah M.",
+    role: "Entrepreneur",
+    initials: "SM",
+    color: "purple",
+  },
+  {
+    quote: "The gamification makes saving actually fun. My kids and I compete on streaks and achievements. Saved $10K in 6 months!",
+    name: "James K.",
+    role: "Software Developer",
+    initials: "JK",
+    color: "gold",
+  },
+  {
+    quote: "I've tried every finance app out there. FinGenie is the only one I stuck with — the pet system is surprisingly motivating.",
+    name: "Emily R.",
+    role: "Teacher",
+    initials: "ER",
+    color: "emerald",
+  },
+];
 
-  /* 1️⃣ SET trạng thái ban đầu (KHÔNG hiện trước) */
+export default function Testimonials({ active }) {
+  const ref = useRef(null);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.set(".testimonials h2", { opacity: 0, y: 30 });
-      gsap.set(".testimonials .subtitle", { opacity: 0, y: 20 });
-
-      gsap.set(".testimonial-card", {
-        opacity: 0,
-        y: 40,
-        scale: 0.95
-      });
-    }, testimonialsRef);
-
+      gsap.set(".testimonials .section-label", { opacity: 0, y: 20 });
+      gsap.set(".testimonials .section-title", { opacity: 0, y: 30 });
+      gsap.set(".testimonials .section-subtitle", { opacity: 0, y: 20 });
+      gsap.set(".testimonial-card", { opacity: 0, y: 40, scale: 0.96 });
+    }, ref);
     return () => ctx.revert();
   }, []);
 
-  /* 2️⃣ PLAY animation khi section active */
   useEffect(() => {
     if (!active) return;
-
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
-
-      tl.to(".testimonials h2", {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out"
-      })
-        .to(
-          ".testimonials .subtitle",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            ease: "power3.out"
-          },
-          "-=0.4"
-        )
-        .to(
-          ".testimonial-card",
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.6,
-            stagger: 0.25,
-            ease: "power3.out"
-          },
-          "-=0.2"
-        );
-    }, testimonialsRef);
-
+      tl.to(".testimonials .section-label", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" })
+        .to(".testimonials .section-title", { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, "-=0.3")
+        .to(".testimonials .section-subtitle", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, "-=0.3")
+        .to(".testimonial-card", {
+          opacity: 1, y: 0, scale: 1, duration: 0.6, stagger: 0.15, ease: "power3.out",
+        }, "-=0.2");
+    }, ref);
     return () => ctx.revert();
   }, [active]);
 
   return (
-    <div className="testimonials" ref={testimonialsRef}>
-      <h2>
-        Loved by <span className="gradient-text">Thousands</span>
+    <div className="testimonials" ref={ref}>
+      <span className="section-label">Testimonials</span>
+      <h2 className="section-title">
+        Loved by{" "}
+        <span className="gradient-text-emerald">Thousands</span>
       </h2>
-
-      <p className="subtitle">
-        See what our users are saying about their FinGenie journey
+      <p className="section-subtitle">
+        See what our users say about their journey with FinGenie.
       </p>
 
       <div className="testimonial-grid">
-        <div className="testimonial-card">
-          <div className="stars">★★★★★</div>
-          <p className="quote">
-            “FinGenie helped me save for my dream startup. The visual
-            progress tracking kept me motivated every single day!”
-          </p>
-
-          <div className="author">
-            <div className="avatar">SM</div>
-            <div>
-              <strong>Sarah M.</strong>
-              <span>Entrepreneur</span>
+        {testimonials.map((t, i) => (
+          <div key={i} className="glass-card testimonial-card">
+            <div className="testimonial-stars">
+              {Array.from({ length: 5 }).map((_, j) => (
+                <span key={j} className="testimonial-star">★</span>
+              ))}
+            </div>
+            <p className="testimonial-quote">"{t.quote}"</p>
+            <div className="testimonial-author">
+              <div className={`testimonial-avatar ${t.color}`}>
+                {t.initials}
+              </div>
+              <div>
+                <div className="testimonial-name">{t.name}</div>
+                <div className="testimonial-role">{t.role}</div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="testimonial-card">
-          <div className="stars">★★★★★</div>
-          <p className="quote">
-            “I’ve tried many savings apps, but nothing comes close to the
-            magical experience of FinGenie. Saved $10K in 6 months!”
-          </p>
-
-          <div className="author">
-            <div className="avatar">JK</div>
-            <div>
-              <strong>James K.</strong>
-              <span>Software Developer</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="testimonial-card">
-          <div className="stars">★★★★★</div>
-          <p className="quote">
-            “The auto-save feature is a game changer. I don’t even notice
-            the savings happening, but my goals keep getting closer!”
-          </p>
-
-          <div className="author">
-            <div className="avatar">ER</div>
-            <div>
-              <strong>Emily R.</strong>
-              <span>Teacher</span>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

@@ -6,9 +6,9 @@ services:
     image: pgvector/pgvector:pg15
     container_name: fingenie-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-fingenie}
-      POSTGRES_USER: ${POSTGRES_USER:-fingenie}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finpassword}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -31,9 +31,9 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -116,13 +116,13 @@ services:
     ports:
       - "5000:5000"
     environment:
-      MLFLOW_BACKEND_STORE_URI: ${MLFLOW_BACKEND_STORE_URI:-postgresql://fingenie:finpassword@postgres:5432/fingenie}
+      MLFLOW_BACKEND_STORE_URI: ${MLFLOW_BACKEND_STORE_URI:?Set MLFLOW_BACKEND_STORE_URI in .env}
       MLFLOW_DEFAULT_ARTIFACT_ROOT: /mlflow/artifacts
     volumes:
       - mlflow_artifacts:/mlflow/artifacts
     command: >
       mlflow server
-      --backend-store-uri ${MLFLOW_BACKEND_STORE_URI:-postgresql://fingenie:finpassword@postgres:5432/fingenie}
+      --backend-store-uri ${MLFLOW_BACKEND_STORE_URI:?Set MLFLOW_BACKEND_STORE_URI in .env}
       --default-artifact-root /mlflow/artifacts
       --host 0.0.0.0
       --port 5000
@@ -193,14 +193,14 @@ services:
       AI_FALLBACK_ENABLED: "true"
       LOG_LEVEL: INFO
       VECTOR_ENABLED: "true"
-      VECTOR_DB_URL: ${VECTOR_DB_URL:-postgresql://fingenie:finpassword@postgres:5432/fingenie}
+      VECTOR_DB_URL: ${VECTOR_DB_URL:?Set VECTOR_DB_URL in .env}
       VECTOR_TABLE: ai_embeddings
       VECTOR_DIMENSION: 384
       VECTOR_TOP_K: 5
       EMBEDDING_MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
 #      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
 #      OLLAMA_MODEL: llama3.2
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyBTocbg1SOqOZpCjgxT6OwgZQRoP2zMIMw}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY in .env}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
       LLM_FAILURE_COOLDOWN_SECONDS: 300
@@ -238,16 +238,17 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-fingenie}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fingenie}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-finpassword}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:?err}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:?err}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?err}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?err}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       AI_SERVICE_URL: http://ai-service:8000
-      MAIL_USERNAME: ${MAIL_USERNAME:-hungphucvp7@gmail.com}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-pdfd jaed ytdh kvcv}
-      JWT_SECRET: ${JWT_SECRET:-583U_zCUihu3AC18Ycg26d40XNsVlN67-rpbbLeYdH-jj3ogPCBlIouzBmsRrcI7ImyBZX9RwIh146EJ0dwnaB_gZUKIuzKil9ivKbmKMhmn7JLPSgImL-7fLVuzrSsk922AudzigQldFA7MBKR85se24kbrP4AtRGsD9Cdnmrblm874XaiM2zKSt9V7vzXJ9k4fTB-_-ZI1RqHBBzxh9YgnLqAVclxixJA7L2bcfG_fJtqLfFDU3sK73HIo4OrKdSfroI7Ilkq97vKfX5hhEZaeE9qhdFsidy1rnjTzrT89ObnPdmm8XSYo4eollf7MBGVydkLTQb50nKTN1dpCYA}
+      MAIL_USERNAME: ${MAIL_USERNAME:?Set MAIL_USERNAME in .env}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:?Set MAIL_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 20s

@@ -4,6 +4,8 @@ import fingenie.com.fingenie.entity.Account;
 import fingenie.com.fingenie.entity.Category;
 import fingenie.com.fingenie.entity.Transaction;
 import fingenie.com.fingenie.entity.Wallet;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -46,6 +48,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     
     @EntityGraph(attributePaths = {"account", "wallet", "category"})
     List<Transaction> findByAccount(Account account);
+
+    @EntityGraph(attributePaths = {"account", "wallet", "category"})
+    Page<Transaction> findByAccount(Account account, Pageable pageable);
     
     @EntityGraph(attributePaths = {"account", "wallet", "category"})
     List<Transaction> findByAccountId(Long accountId);
@@ -162,4 +167,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         WHERE t.transactionDate > :date
     """)
     List<Long> findDistinctAccountIdsWithTransactionsAfter(@Param("date") Date date);
+
+    // ── Admin dashboard queries ──────────────────────────────────────────────
+
+    /** Sum of all positive-amount (income) transactions across all accounts. */
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.amount > 0")
+    BigDecimal sumAllIncome();
 }

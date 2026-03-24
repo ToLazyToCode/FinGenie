@@ -9,7 +9,7 @@ import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 import SideNav from "./components/SideNav";
 
-const sectionClasses = ["dark", "mid", "light", "mid", "dark"];
+const sectionThemes = ["dark", "mid", "light", "mid", "dark"];
 
 let lastScrollTime = 0;
 
@@ -26,8 +26,23 @@ export default function App() {
     <>
       <CTA active={current === 4} />
       <Footer />
-    </>
+    </>,
   ];
+
+  const goTo = (index) => {
+    if (isAnimating.current || index === current) return;
+    isAnimating.current = true;
+
+    gsap.to(containerRef.current, {
+      y: `-${index * 100}vh`,
+      duration: 1,
+      ease: "power3.inOut",
+      onComplete: () => {
+        setCurrent(index);
+        isAnimating.current = false;
+      },
+    });
+  };
 
   useEffect(() => {
     const onWheel = (e) => {
@@ -45,24 +60,37 @@ export default function App() {
       }
     };
 
-    window.addEventListener("wheel", onWheel, { passive: false });
-    return () => window.removeEventListener("wheel", onWheel);
-  }, [current]);
+    const onKeyDown = (e) => {
+      if (isAnimating.current) return;
 
-  const goTo = (index) => {
-    if (isAnimating.current) return;
-    isAnimating.current = true;
-
-    gsap.to(containerRef.current, {
-      y: `-${index * 100}vh`,
-      duration: 1,
-      ease: "power3.inOut",
-      onComplete: () => {
-        setCurrent(index);
-        isAnimating.current = false;
+      if (
+        (e.key === "ArrowDown" || e.key === "PageDown") &&
+        current < sections.length - 1
+      ) {
+        e.preventDefault();
+        goTo(current + 1);
+      } else if (
+        (e.key === "ArrowUp" || e.key === "PageUp") &&
+        current > 0
+      ) {
+        e.preventDefault();
+        goTo(current - 1);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        goTo(sections.length - 1);
       }
-    });
-  };
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [current]);
 
   return (
     <>
@@ -70,7 +98,7 @@ export default function App() {
         {sections.map((Section, i) => (
           <section
             key={i}
-            className={`section ${sectionClasses[i]} ${
+            className={`section ${sectionThemes[i]} ${
               i === sections.length - 1 ? "section-last" : ""
             }`}
           >
@@ -81,11 +109,7 @@ export default function App() {
 
       <div style={{ height: `${sections.length * 100}vh` }} />
 
-      <SideNav
-        current={current}
-        total={sections.length}
-        goTo={goTo}
-      />
+      <SideNav current={current} total={sections.length} goTo={goTo} />
     </>
   );
 }

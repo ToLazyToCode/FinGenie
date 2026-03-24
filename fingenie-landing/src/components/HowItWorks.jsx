@@ -1,120 +1,75 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
-export default function HowItWorks({ active }) {
-  const howRef = useRef(null);
+const steps = [
+  {
+    num: "01",
+    title: "Download & Sign Up",
+    desc: "Get FinGenie from the App Store or Google Play. Create your account in under 60 seconds.",
+  },
+  {
+    num: "02",
+    title: "Set Your Goals",
+    desc: "Tell your genie what you're saving for. Vacation, emergency fund, new car — anything goes.",
+  },
+  {
+    num: "03",
+    title: "Watch the Magic",
+    desc: "AI analyzes your habits, suggests optimizations, and gamifies your journey to keep you on track.",
+  },
+];
 
-  /* 1️⃣ SET trạng thái ban đầu – KHÔNG cho hiện trước */
+export default function HowItWorks({ active }) {
+  const ref = useRef(null);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.set(".how h2", { opacity: 0, y: 30 });
-      gsap.set(".how .subtitle", { opacity: 0, y: 20 });
-
-      gsap.set(".timeline::before", { scaleX: 0 }); // fallback nếu dùng pseudo
+      gsap.set(".how .section-label", { opacity: 0, y: 20 });
+      gsap.set(".how .section-title", { opacity: 0, y: 30 });
+      gsap.set(".how .section-subtitle", { opacity: 0, y: 20 });
       gsap.set(".step", { opacity: 0, y: 40 });
-      gsap.set(".step-icon", { scale: 0 });
-    }, howRef);
-
+      gsap.set(".step-number", { scale: 0 });
+    }, ref);
     return () => ctx.revert();
   }, []);
 
-  /* 2️⃣ PLAY animation khi active */
   useEffect(() => {
     if (!active) return;
-
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
-
-      tl.to(".how h2", {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out"
-      })
-        .to(
-          ".how .subtitle",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            ease: "power3.out"
-          },
-          "-=0.4"
-        )
-        .fromTo(
-          ".timeline::before",
-          { scaleX: 0 },
-          {
-            scaleX: 1,
-            transformOrigin: "left center",
-            duration: 0.8,
-            ease: "power2.out"
-          },
-          "-=0.2"
-        )
-        .to(
-          ".step",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            stagger: 0.25,
-            ease: "power3.out"
-          },
-          "-=0.4"
-        )
-        .to(
-          ".step-icon",
-          {
-            scale: 1,
-            duration: 0.4,
-            stagger: 0.25,
-            ease: "back.out(1.8)"
-          },
-          "-=0.8"
-        );
-    }, howRef);
-
+      tl.to(".how .section-label", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" })
+        .to(".how .section-title", { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, "-=0.3")
+        .to(".how .section-subtitle", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, "-=0.3")
+        .to(".step-number", { scale: 1, duration: 0.5, stagger: 0.2, ease: "back.out(1.7)" }, "-=0.1")
+        .to(".step", { opacity: 1, y: 0, duration: 0.5, stagger: 0.2, ease: "power3.out" }, "-=0.6");
+    }, ref);
     return () => ctx.revert();
   }, [active]);
 
   return (
-    <div className="how" ref={howRef}>
-      <h2>
-        How <span className="gradient-text">FinGenie</span> Works
+    <div className="how" ref={ref}>
+      <span className="section-label">How It Works</span>
+      <h2 className="section-title">
+        Get Started in{" "}
+        <span className="gradient-text-gold">Three Steps</span>
       </h2>
-
-      <p className="subtitle">
-        Three simple steps to financial freedom
+      <p className="section-subtitle">
+        From download to your first savings goal in under 5 minutes.
+        No complexity, just magic.
       </p>
 
-      <div className="timeline">
-        <div className="step">
-          <div className="step-icon">✨</div>
-          <span className="step-tag">Step 01</span>
-          <h3>Make a Wish</h3>
-          <p>
-            Tell FinGenie what you're saving for, be it a dream vacation or your first home.
-          </p>
-        </div>
-
-        <div className="step">
-          <div className="step-icon">🪄</div>
-          <span className="step-tag">Step 02</span>
-          <h3>Watch the Magic</h3>
-          <p>
-            Our smart algorithms create a personalized savings plan that fits your lifestyle.
-          </p>
-        </div>
-
-        <div className="step">
-          <div className="step-icon">🏆</div>
-          <span className="step-tag">Step 03</span>
-          <h3>Celebrate Success</h3>
-          <p>
-            Reach your goals and watch your wishes come true, one milestone at a time.
-          </p>
-        </div>
+      <div className="steps">
+        {steps.map((s, i) => (
+          <div key={i} className="step">
+            <div className="step-number">
+              <div className="step-number-inner">
+                <span>{s.num}</span>
+              </div>
+            </div>
+            <h3>{s.title}</h3>
+            <p>{s.desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

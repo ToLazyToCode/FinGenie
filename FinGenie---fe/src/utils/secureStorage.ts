@@ -123,7 +123,13 @@ export const secureStorage = {
   async setItem(key: StorageKey, value: string): Promise<void> {
     try {
       if (Platform.OS === 'web') {
-        // Web fallback - localStorage (less secure)
+        // Web fallback - localStorage (NOT secure, vulnerable to XSS)
+        // TODO: Migrate to httpOnly cookies for web auth tokens
+        warnOnce(
+          'web-storage-insecure',
+          '[SecureStorage] Using localStorage on web. Tokens are vulnerable to XSS. ' +
+          'Consider migrating to httpOnly cookies for production web builds.'
+        );
         if (typeof window !== 'undefined' && window.localStorage) {
           window.localStorage.setItem(key, value);
         }

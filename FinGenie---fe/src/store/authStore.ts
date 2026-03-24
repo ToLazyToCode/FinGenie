@@ -168,7 +168,7 @@ export const authStore = create<AuthState>((set, get) => ({
       if (accessToken && refreshToken) {
         // Check if token is expired
         if (expiresAt && expiresAt < Date.now()) {
-          console.log('[AuthStore] Stored token expired, need to refresh');
+          if (__DEV__) console.log('[AuthStore] Stored token expired, need to refresh');
           set({
             accessToken: null,
             refreshToken,
@@ -189,7 +189,7 @@ export const authStore = create<AuthState>((set, get) => ({
           user: userDataStr ? JSON.parse(userDataStr) : null,
         });
 
-        console.log('[AuthStore] Session restored from secure storage');
+        if (__DEV__) console.log('[AuthStore] Session restored from secure storage');
         return true;
       }
 

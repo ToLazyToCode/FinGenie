@@ -1,117 +1,92 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
+const features = [
+  {
+    icon: "🤖",
+    color: "purple",
+    title: "AI Financial Advisor",
+    desc: "Get personalized money advice powered by AI. Ask anything about your spending, savings, and investment habits.",
+  },
+  {
+    icon: "🎮",
+    color: "gold",
+    title: "Gamified Savings",
+    desc: "Earn XP, level up, unlock achievements, and care for your virtual pet as you build better financial habits.",
+  },
+  {
+    icon: "📊",
+    color: "emerald",
+    title: "Smart Analytics",
+    desc: "Beautiful dashboards that break down your spending by category, track trends, and reveal insights.",
+  },
+  {
+    icon: "🎯",
+    color: "pink",
+    title: "Goal Tracking",
+    desc: "Set savings goals for anything — vacation, emergency fund, or dream purchase — and track every step.",
+  },
+  {
+    icon: "💳",
+    color: "cyan",
+    title: "Multi-Wallet",
+    desc: "Manage multiple wallets and accounts in one place. See your complete financial picture at a glance.",
+  },
+  {
+    icon: "🔒",
+    color: "purple",
+    title: "Bank-Grade Security",
+    desc: "Your data is encrypted with hardware-backed security on mobile and industry-standard protocols.",
+  },
+];
+
 export default function Features({ active }) {
-  const featuresRef = useRef(null);
+  const ref = useRef(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // 1️⃣ SET trạng thái ban đầu (ẨN HOÀN TOÀN)
-      gsap.set(".features h2", { opacity: 0, y: 30 });
-      gsap.set(".features .subtitle", { opacity: 0, y: 20 });
-      gsap.set(".feature-grid .card", { opacity: 0, y: 40 });
-      gsap.set(".feature-grid .icon-circle", { scale: 0 });
-    }, featuresRef);
-
+      gsap.set(".section-label", { opacity: 0, y: 20 });
+      gsap.set(".section-title", { opacity: 0, y: 30 });
+      gsap.set(".section-subtitle", { opacity: 0, y: 20 });
+      gsap.set(".feature-card", { opacity: 0, y: 40 });
+    }, ref);
     return () => ctx.revert();
   }, []);
 
   useEffect(() => {
     if (!active) return;
-
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
-
-      // 2️⃣ PLAY animation theo thứ tự
-      tl.to(".features h2", {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: "power3.out"
-      })
-        .to(
-          ".features .subtitle",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            ease: "power3.out"
-          },
-          "-=0.4"
-        )
-        .to(
-          ".feature-grid .card",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            stagger: 0.15,
-            ease: "power3.out"
-          },
-          "-=0.2"
-        )
-        .to(
-          ".feature-grid .icon-circle",
-          {
-            scale: 1,
-            duration: 0.4,
-            stagger: 0.15,
-            ease: "back.out(1.7)"
-          },
-          "-=0.6"
-        );
-    }, featuresRef);
-
+      tl.to(".section-label", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" })
+        .to(".section-title", { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, "-=0.3")
+        .to(".section-subtitle", { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, "-=0.3")
+        .to(".feature-card", {
+          opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power3.out",
+        }, "-=0.2");
+    }, ref);
     return () => ctx.revert();
   }, [active]);
 
   return (
-    <div className="features" ref={featuresRef}>
-      <h2>
-        <span className="gradient-text">Savings Goals</span> Made Simple
+    <div className="features" ref={ref}>
+      <span className="section-label">Features</span>
+      <h2 className="section-title">
+        Everything You Need to{" "}
+        <span className="gradient-text">Master Your Money</span>
       </h2>
-
-      <p className="subtitle">
-        Everything you need to turn your financial dreams into reality,
-        all in one magical app.
+      <p className="section-subtitle">
+        Powerful tools wrapped in a delightful experience. Finance
+        management that actually feels good.
       </p>
 
       <div className="feature-grid">
-        <div className="card">
-          <div className="icon-circle">🎯</div>
-          <h3>Set Custom Goals</h3>
-          <p>
-            Create personalized savings goals for anything—vacation,
-            emergency fund, new car, or dream home.
-          </p>
-        </div>
-
-        <div className="card">
-          <div className="icon-circle">📈</div>
-          <h3>Track Your Progress</h3>
-          <p>
-            Beautiful visualizations show exactly how close you are
-            to reaching each goal.
-          </p>
-        </div>
-
-        <div className="card">
-          <div className="icon-circle">🤖</div>
-          <h3>Smart Auto-Save</h3>
-          <p>
-            Set up automatic contributions that work around your
-            spending habits.
-          </p>
-        </div>
-
-        <div className="card">
-          <div className="icon-circle">🎉</div>
-          <h3>Milestone Celebrations</h3>
-          <p>
-            Get notified when you hit milestones and stay motivated
-            on your journey.
-          </p>
-        </div>
+        {features.map((f, i) => (
+          <div key={i} className="glass-card feature-card">
+            <div className={`feature-icon ${f.color}`}>{f.icon}</div>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

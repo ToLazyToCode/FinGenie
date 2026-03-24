@@ -17,6 +17,9 @@ target
 src/main/resources/application.properties
 .opencode
 .beads
+.env
+.env.*
+!.env.example
 
 ### IntelliJ IDEA ###
 .idea

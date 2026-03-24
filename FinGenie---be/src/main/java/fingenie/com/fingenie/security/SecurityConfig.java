@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
@@ -24,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Configuration
+@EnableMethodSecurity          // enables @PreAuthorize / @PostAuthorize on controllers
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -44,7 +46,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "http://10.0.2.2:*",
+            "http://127.0.0.1:*",
+            "https://*.fingenie.com"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
@@ -66,6 +73,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/auth/**",
+                    "/api/v1/admin/login",          // admin login is public
                     "/api/v1/validate/**",
                     "/api/v1/billing/return/**",
                     "/api/v1/billing/webhooks/payos",
@@ -73,8 +81,10 @@ public class SecurityConfig {
                     "/api/billing/return/**",
                     "/api/billing/webhooks/payos",
                     "/api/billing/ipn/vnpay",
-                    "/actuator/**"
+                    "/actuator/health",
+                    "/actuator/info"
                 ).permitAll()
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")   // all other admin paths require ADMIN
                 .anyRequest().authenticated())
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             // Add CorrelationIdFilter first for request tracking

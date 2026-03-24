@@ -128,11 +128,10 @@ export function getApiBaseUrl(): string {
   }
 
   if (!envUrl || !parseUrl(envUrl)) {
-    console.error(
+    throw new Error(
       '[API Config] EXPO_PUBLIC_API_URL is not configured for production build. ' +
       'Please set it in your eas.json or .env file.'
     );
-    return 'https://api.fingenie.com';
   }
 
   return envUrl;
