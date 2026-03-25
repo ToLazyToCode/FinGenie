@@ -380,6 +380,31 @@ public class GlobalExceptionHandler {
     }
 
     // ========================================
+    // ENTITY NOT FOUND (404)
+    // ========================================
+
+    @ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(
+            jakarta.persistence.EntityNotFoundException ex,
+            HttpServletRequest request) {
+        
+        String correlationId = getCorrelationId();
+        
+        log.info("[{}] Entity not found: {}", correlationId, ex.getMessage());
+        
+        ErrorResponse response = ErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .errorCode("RESOURCE_NOT_FOUND")
+                .message(ex.getMessage() != null ? ex.getMessage() : "Requested resource not found")
+                .path(request.getRequestURI())
+                .correlationId(correlationId)
+                .build();
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    // ========================================
     // DATABASE ERRORS
     // ========================================
 

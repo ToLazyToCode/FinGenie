@@ -56,7 +56,7 @@ public class BehaviorProfileController {
             @RequestHeader(value = "X-User-Id", required = false) Long ignoredUserId) {
         Long userId = SecurityUtils.getCurrentAccountId();
         UserBehaviorProfile profile = behaviorProfileRepository.findByUserId(userId)
-            .orElseThrow(() -> new IllegalStateException("No behavior profile found. Please complete the survey first."));
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("No behavior profile found. Please complete the survey first."));
         
         return ResponseEntity.ok(explainabilityService.explainProfile(profile));
     }

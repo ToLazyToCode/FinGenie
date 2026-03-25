@@ -51,7 +51,7 @@ public class UserProfileService {
     public UserProfileResponse getCurrentProfile() {
         Account account = SecurityUtils.getCurrentAccount();
         UserProfile profile = userProfileRepository.findByAccount(account)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User profile not found"));
         
         return mapToResponse(profile);
     }
@@ -63,7 +63,7 @@ public class UserProfileService {
     @Transactional(readOnly = true)
     public UserProfileResponse getByAccountId(Long accountId) {
         UserProfile profile = userProfileRepository.findByAccountId(accountId)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User profile not found"));
         
         return mapToResponse(profile);
     }

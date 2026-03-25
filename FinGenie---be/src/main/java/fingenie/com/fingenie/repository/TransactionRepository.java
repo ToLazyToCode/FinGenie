@@ -173,4 +173,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     /** Sum of all positive-amount (income) transactions across all accounts. */
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.amount > 0")
     BigDecimal sumAllIncome();
+
+    // ── Admin user-detail queries ────────────────────────────────────────────
+
+    /**
+     * Paginated transactions for a single account (most-recent first).
+     * Eagerly fetches wallet and category to avoid N+1.
+     */
+    @EntityGraph(attributePaths = {"wallet", "category"})
+    @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId "
+         + "ORDER BY t.transactionDate DESC, t.createdAt DESC")
+    Page<Transaction> findByAccountIdPaged(
+            @Param("accountId") Long accountId,
+            Pageable pageable);
+
+    /** Sum of income (amount > 0) for a user, all time. */
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t "
+         + "WHERE t.account.id = :accountId AND t.amount > 0")
+    BigDecimal sumTotalIncomeByAccountId(@Param("accountId") Long accountId);
+
+    /** Sum of expenses (|amount| where amount < 0) for a user, all time. */
+    @Query("SELECT COALESCE(SUM(ABS(t.amount)), 0) FROM Transaction t "
+         + "WHERE t.account.id = :accountId AND t.amount < 0")
+    BigDecimal sumTotalExpenseByAccountId(@Param("accountId") Long accountId);
 }

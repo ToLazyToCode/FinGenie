@@ -239,7 +239,7 @@ public class SurveyService {
     @Transactional(readOnly = true)
     public BehaviorProfileResponse getBehaviorProfile(Long userId) {
         UserBehaviorProfile profile = behaviorProfileRepository.findByUserId(userId)
-            .orElseThrow(() -> new IllegalStateException(
+            .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
                 "No behavior profile found. Please complete the survey first."));
 
         return mapToProfileResponse(profile);
