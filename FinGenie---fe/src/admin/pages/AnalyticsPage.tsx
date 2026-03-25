@@ -33,7 +33,7 @@ export function AnalyticsPage() {
 
   const fetchAnalytics = async () => {
     try {
-      const res = await apiClient.get(`/analytics/${period}`, {
+      const res = await apiClient.get(`/admin/analytics/overview?period=${period}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setAnalytics(res.data.data ?? res.data);
