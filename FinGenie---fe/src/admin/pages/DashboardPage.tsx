@@ -1,284 +1,305 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
-import axios from 'axios';
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from 'recharts';
+import {
+  Users, UserPlus, Wallet, RefreshCw, TrendingUp,
+  Activity, Database, Cpu, Clock,
+} from 'lucide-react';
+import { apiClient } from '../../api/client';
 import { useAdminAuthStore } from '../stores/adminAuthStore';
-import { KPICard } from '../components/Dashboard/KPICard';
-import { StatusGrid } from '../components/Dashboard/StatusGrid';
+import {
+  fmt, fmtMoney, safe,
+  accentMap,
+  card, cardInner, section, tableWrapper, tableHeader, tableRow, tableCell, tableDivider,
+  btnSecondary,
+  pageTitle, pageSubtitle,
+  chartTooltipStyle, chartLabelStyle, chartGrid,
+  colors,
+} from '../theme/tokens';
 import type {
   AdminDashboardStats,
+  AdminDashboardCharts,
   AdminRecentTransaction,
   AdminSystemHealth,
 } from '../types/admin';
 
-const BASE = 'http://localhost:8080/api/v1/admin/dashboard';
-
-/**
- * Main admin dashboard page.
- * Fetches KPI stats, recent transactions, and system health in parallel.
- */
+/* ── component ───────────────────────────────────────── */
 export function DashboardPage() {
   const { token } = useAdminAuthStore();
-
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
+  const [charts, setCharts] = useState<AdminDashboardCharts | null>(null);
   const [transactions, setTransactions] = useState<AdminRecentTransaction[]>([]);
   const [health, setHealth] = useState<AdminSystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const authHeader = { Authorization: `Bearer ${token ?? ''}` };
+  const h = { Authorization: `Bearer ${token ?? ''}` };
 
   const fetchAll = useCallback(async () => {
-    setFetchError(null);
     try {
-      const [statsRes, txnRes, healthRes] = await Promise.all([
-        axios.get<AdminDashboardStats>(`${BASE}/stats`, { headers: authHeader }),
-        axios.get<AdminRecentTransaction[]>(`${BASE}/recent-transactions?limit=10`, { headers: authHeader }),
-        axios.get<AdminSystemHealth>(`${BASE}/system-health`, { headers: authHeader }),
+      const [s, c, t, he] = await Promise.all([
+        apiClient.get<AdminDashboardStats>('/admin/dashboard/stats', { headers: h }),
+        apiClient.get<AdminDashboardCharts>('/admin/dashboard/charts', { headers: h }),
+        apiClient.get<AdminRecentTransaction[]>('/admin/dashboard/recent-transactions?limit=10', { headers: h }),
+        apiClient.get<AdminSystemHealth>('/admin/dashboard/system-health', { headers: h }),
       ]);
-      setStats(statsRes.data);
-      setTransactions(txnRes.data);
-      setHealth(healthRes.data);
-    } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? (err.response?.data?.message as string | undefined) ?? 'Failed to load dashboard data'
-        : 'Network error';
-      setFetchError(msg);
+      setStats(s.data);
+      setCharts(c.data);
+      setTransactions(t.data);
+      setHealth(he.data);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to load dashboard');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    void fetchAll();
-  }, [fetchAll]);
+  useEffect(() => { void fetchAll(); }, [fetchAll]);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    void fetchAll();
-  };
+  const refresh = () => { setRefreshing(true); void fetchAll(); };
 
+  /* ── chart data transform ─────────────────────────── */
+  const chartData = charts
+    ? charts.labels.map((label, i) => ({
+      date: label,
+      users: charts.userGrowthByDay[i] ?? 0,
+      volume: charts.transactionVolumeByDay[i] ?? 0,
+    }))
+    : [];
+
+  /* ── skeleton ─────────────────────────────────────── */
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </View>
+      <div className="space-y-6 animate-pulse">
+        <div className="grid grid-cols-4 gap-5">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-32 rounded-2xl skeleton" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-5">
+          <div className="h-80 rounded-2xl skeleton" />
+          <div className="h-80 rounded-2xl skeleton" />
+        </div>
+        <div className="h-64 rounded-2xl skeleton" />
+      </div>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.scroll}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}
-    >
-      {/* Page header */}
-      <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Dashboard Overview</Text>
-        <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
-          <Text style={styles.refreshText}>↻ Refresh</Text>
-        </TouchableOpacity>
-      </View>
+    <div className="space-y-6 page-enter">
+      {/* ── header ─────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className={pageTitle}>Dashboard Overview</h1>
+          <p className={pageSubtitle}>Real-time system metrics &amp; analytics</p>
+        </div>
+        <button
+          onClick={refresh}
+          disabled={refreshing}
+          className={`${btnSecondary} disabled:opacity-50`}
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
 
-      {/* Error */}
-      {fetchError ? (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>{fetchError}</Text>
-        </View>
-      ) : null}
-
-      {/* KPI Cards */}
-      <Text style={styles.sectionLabel}>Key Metrics</Text>
-      <View style={styles.kpiRow}>
+      {/* ── KPI cards ──────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 stagger-grid">
         <KPICard
-          title="Active Users"
-          value={stats?.totalActiveUsers ?? '–'}
-          subtitle="Non-deleted accounts"
-          accentColor="#3b82f6"
-          icon="👥"
+          icon={Users} label="Active Users" value={fmt(stats?.totalActiveUsers ?? 0)}
+          sub="Non-deleted accounts" accent="emerald"
         />
         <KPICard
-          title="New Today"
-          value={stats?.newUsersToday ?? '–'}
-          subtitle="Registered since midnight"
-          accentColor="#22c55e"
-          icon="🆕"
+          icon={UserPlus} label="New Today" value={fmt(stats?.newUsersToday ?? 0)}
+          sub="Registered since midnight" accent="cyan"
         />
         <KPICard
-          title="Total Income"
-          value={stats ? `₫${Number(stats.totalIncome).toLocaleString()}` : '–'}
-          subtitle="All positive transactions"
-          accentColor="#f59e0b"
-          icon="💰"
+          icon={Wallet} label="Total Income" value={fmtMoney(stats?.totalIncome ?? 0)}
+          sub="All positive transactions" accent="amber"
         />
         <KPICard
-          title="Transactions"
-          value={stats?.totalTransactions ?? '–'}
-          subtitle="All time"
-          accentColor="#a78bfa"
-          icon="📋"
+          icon={TrendingUp} label="Transactions" value={fmt(stats?.totalTransactions ?? 0)}
+          sub="All time" accent="violet"
         />
-      </View>
+      </div>
 
-      {/* System Health */}
-      <Text style={styles.sectionLabel}>System Health</Text>
-      <StatusGrid health={health} isLoading={false} />
+      {/* ── Charts ─────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* User Growth */}
+        <div className={`${section} p-5 chart-enter`}>
+          <h3 className="text-sm font-semibold text-slate-300 mb-4">User Growth (30 days)</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="gradUsers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.emerald} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={colors.emerald} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+              <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={chartTooltipStyle}
+                labelStyle={chartLabelStyle}
+              />
+              <Area type="monotone" dataKey="users" stroke={colors.emerald} strokeWidth={2} fill="url(#gradUsers)" name="New Users" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
 
-      {/* Recent Transactions */}
-      <Text style={styles.sectionLabel}>Recent Transactions</Text>
-      <View style={styles.table}>
-        {/* Header */}
-        <View style={[styles.tableRow, styles.tableHeader]}>
-          <Text style={[styles.tableCell, styles.headerCell, { flex: 2 }]}>Account</Text>
-          <Text style={[styles.tableCell, styles.headerCell, { flex: 1.5 }]}>Category</Text>
-          <Text style={[styles.tableCell, styles.headerCell, { flex: 1 }]}>Amount</Text>
-          <Text style={[styles.tableCell, styles.headerCell, { flex: 1 }]}>Date</Text>
-        </View>
+        {/* Transaction Volume */}
+        <div className={`${section} p-5 chart-enter`}>
+          <h3 className="text-sm font-semibold text-slate-300 mb-4">Transaction Volume (30 days)</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={chartData}>
+              <defs>
+                <linearGradient id="gradVolume" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={colors.cyan} stopOpacity={0.8} />
+                  <stop offset="95%" stopColor={colors.cyan} stopOpacity={0.2} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+              <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                contentStyle={chartTooltipStyle}
+                labelStyle={chartLabelStyle}
+                formatter={(value: any) => [`₫${fmt(Number(value))}`, 'Volume']}
+              />
+              <Bar dataKey="volume" fill="url(#gradVolume)" radius={[6, 6, 0, 0]} name="Volume" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
-        {transactions.length === 0 ? (
-          <View style={styles.emptyRow}>
-            <Text style={styles.emptyText}>No transactions found.</Text>
-          </View>
-        ) : (
-          transactions.map((txn) => (
-            <View key={txn.transactionId} style={styles.tableRow}>
-              <View style={{ flex: 2 }}>
-                <Text style={styles.tableCell} numberOfLines={1}>
-                  {txn.accountName ?? txn.accountEmail ?? '–'}
-                </Text>
-                {txn.accountEmail && txn.accountName ? (
-                  <Text style={styles.subCell} numberOfLines={1}>{txn.accountEmail}</Text>
-                ) : null}
-              </View>
-              <Text style={[styles.tableCell, { flex: 1.5 }]} numberOfLines={1}>
-                {txn.categoryName ?? '–'}
-              </Text>
-              <Text
-                style={[
-                  styles.tableCell,
-                  { flex: 1, color: txn.amount >= 0 ? '#22c55e' : '#ef4444' },
-                ]}
-              >
-                {txn.amount >= 0 ? '+' : ''}
-                {Number(txn.amount).toLocaleString()}
-              </Text>
-              <Text style={[styles.tableCell, { flex: 1 }]}>
-                {txn.transactionDate ?? '–'}
-              </Text>
-            </View>
-          ))
-        )}
-      </View>
-    </ScrollView>
+      {/* ── System Health ──────────────────────────── */}
+      <div className={`${section} p-5`}>
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">System Health</h3>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <HealthCard
+            icon={Activity}
+            label="Status"
+            value={health?.status ?? '–'}
+            ok={health?.status === 'UP'}
+          />
+          <HealthCard
+            icon={Database}
+            label="Database"
+            value={health?.databaseStatus ?? '–'}
+            ok={health?.databaseStatus === 'UP'}
+          />
+          <HealthCard
+            icon={Cpu}
+            label="Heap Usage"
+            value={`${health?.heapUsagePercent?.toFixed(1) ?? '–'}%`}
+            sub={`${health?.heapUsedMb?.toFixed(0) ?? '–'} / ${health?.heapMaxMb?.toFixed(0) ?? '–'} MB`}
+            ok={(health?.heapUsagePercent ?? 0) < 85}
+          />
+          <HealthCard
+            icon={Clock}
+            label="Uptime"
+            value={formatUptime(health?.uptimeSeconds ?? 0)}
+            sub={`${health?.activeThreads ?? '–'} threads`}
+            ok
+          />
+        </div>
+      </div>
+
+      {/* ── Recent Transactions ────────────────────── */}
+      <div className={tableWrapper}>
+        <div className="px-5 py-4 border-b border-white/[0.06]">
+          <h3 className="text-sm font-semibold text-slate-300">Recent Transactions</h3>
+        </div>
+        <div className="overflow-x-auto admin-scroll">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/[0.06]">
+                <th className={tableHeader}>Account</th>
+                <th className={tableHeader}>Category</th>
+                <th className={`${tableHeader} text-right`}>Amount</th>
+                <th className={`${tableHeader} text-right`}>Date</th>
+              </tr>
+            </thead>
+            <tbody className={tableDivider}>
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-5 py-10 text-center text-slate-600">No transactions found</td>
+                </tr>
+              ) : (
+                transactions.map(txn => (
+                  <tr key={txn.transactionId} className={`${tableRow} table-row-hover`}>
+                    <td className={tableCell}>
+                      <div className="font-medium text-slate-200">{safe(txn.accountName)}</div>
+                      <div className="text-xs text-slate-500">{safe(txn.accountEmail)}</div>
+                    </td>
+                    <td className={`${tableCell} text-slate-400`}>{safe(txn.categoryName)}</td>
+                    <td className={`${tableCell} text-right font-semibold tabular-nums`}>
+                      <span className={(txn.amount ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                        {(txn.amount ?? 0) >= 0 ? '+' : ''}₫{fmt(Math.abs(txn.amount ?? 0))}
+                      </span>
+                    </td>
+                    <td className={`${tableCell} text-right text-slate-500 text-xs`}>{safe(txn.transactionDate)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  pageTitle: {
-    color: '#f1f5f9',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  refreshBtn: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  refreshText: {
-    color: '#94a3b8',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  errorBanner: {
-    backgroundColor: '#450a0a',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#ef4444',
-  },
-  errorText: {
-    color: '#fca5a5',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  sectionLabel: {
-    color: '#94a3b8',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
-    marginTop: 24,
-  },
-  kpiRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  table: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  tableHeader: {
-    backgroundColor: '#0f172a',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#0f172a',
-  },
-  headerCell: {
-    color: '#64748b',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  tableCell: {
-    color: '#e2e8f0',
-    fontSize: 13,
-  },
-  subCell: {
-    color: '#64748b',
-    fontSize: 11,
-    marginTop: 1,
-  },
-  emptyRow: {
-    paddingVertical: 24,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#475569',
-    fontSize: 14,
-  },
-});
+/* ── sub-components ──────────────────────────────────── */
+
+function KPICard({ icon: Icon, label, value, sub, accent }: {
+  icon: React.ElementType; label: string; value: string; sub: string;
+  accent: keyof typeof accentMap;
+}) {
+  const a = accentMap[accent];
+  return (
+    <div className={`${card} ${cardInner} animate-slide-up hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20`}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
+        <div className={`w-9 h-9 rounded-xl ${a.bg} flex items-center justify-center ring-1 ${a.ring}`}>
+          <Icon className={`w-[18px] h-[18px] ${a.text}`} />
+        </div>
+      </div>
+      <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+      <div className="text-xs text-slate-500 mt-1">{sub}</div>
+    </div>
+  );
+}
+
+function HealthCard({ icon: Icon, label, value, sub, ok }: {
+  icon: React.ElementType; label: string; value: string; sub?: string; ok: boolean;
+}) {
+  return (
+    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4 hover:border-white/[0.10] transition-all duration-300">
+      <div className="flex items-center gap-3 mb-2">
+        <Icon className="w-4 h-4 text-slate-500" />
+        <span className="text-xs font-medium text-slate-500">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full ${ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
+        <span className={`text-sm font-semibold ${ok ? 'text-emerald-400' : 'text-red-400'}`}>{value}</span>
+      </div>
+      {sub && <div className="text-xs text-slate-600 mt-1 ml-5">{sub}</div>}
+    </div>
+  );
+}
+
+function formatUptime(seconds: number): string {
+  if (!seconds) return '–';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
