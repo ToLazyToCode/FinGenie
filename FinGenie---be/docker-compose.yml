@@ -185,6 +185,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
       MLFLOW_TRACKING_URI: http://mlflow:5000
       # Local host-mode default keeps BE in IntelliJ and infra in Docker.
       # For full docker mode set AI_BACKEND_URL=http://backend:8080.
