@@ -12,6 +12,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       type: 'sourceFile',
     };
   }
+  // Force lucide-react to use CJS build (ESM entry fails Metro resolution)
+  if (moduleName === 'lucide-react') {
+    return {
+      filePath: path.resolve(__dirname, 'node_modules/lucide-react/dist/cjs/lucide-react.js'),
+      type: 'sourceFile',
+    };
+  }
   // Fallback to default resolution
   return context.resolveRequest(context, moduleName, platform);
 };

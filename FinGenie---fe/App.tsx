@@ -27,6 +27,8 @@ import { ErrorPopupManager } from './src/components/system/ErrorPopupManager';
 import type { ApiError } from './src/api/client';
 // Initialize resilient client interceptors (side effect import)
 import './src/api/resilientClient';
+// Admin dashboard (web only)
+import { AdminRouter } from './src/admin/AdminRouter';
 
 /**
  * Create hardened QueryClient with bank-grade error handling
@@ -101,6 +103,11 @@ function createQueryClient(): QueryClient {
 }
 
 export default function App() {
+  // On web, if the URL starts with /admin, render the admin dashboard
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+    return <AdminRouter />;
+  }
+
   // Create stable QueryClient instance
   const queryClient = useMemo(() => createQueryClient(), []);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);

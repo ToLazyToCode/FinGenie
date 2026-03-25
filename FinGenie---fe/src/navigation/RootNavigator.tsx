@@ -167,6 +167,11 @@ export function RootNavigator({ queryClient, navigationRef: externalNavRef }: Ro
 /**
  * Wrapper component that adds auth lifecycle hooks
  * Only active when authenticated
+ *
+ * STABILITY: Loading/error states are only shown when no cached data exists.
+ * Once survey data is fetched, the navigator stays mounted even if a background
+ * refetch fails. This prevents the entire navigation tree from remounting
+ * (which resets the user back to Home) on transient network errors.
  */
 function AppNavigatorWithAuth() {
   // Enable all auth lifecycle features:
@@ -185,41 +190,58 @@ function AppNavigatorWithAuth() {
     refetch: refetchSurveyStatus,
   } = useSurveyStatus();
 
-  if (isSurveyStatusLoading) {
+  // ──────────────────────────────────────────────────────────────
+  // Only show loading / error when we have NO cached data at all.
+  // React Query preserves `data` during refetches and even during
+  // error states, so `surveyStatus` will only be null/undefined
+  // during the very first fetch.  Gating on `!surveyStatus` keeps
+  // the navigator tree mounted through transient network errors.
+  // ──────────────────────────────────────────────────────────────
+  if (!surveyStatus) {
+    if (isSurveyStatusLoading) {
+      return (
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.stateText, { color: colors.textSecondary }]}>{t('common.loading')}</Text>
+        </View>
+      );
+    }
+
+    if (isSurveyStatusError) {
+      return (
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <Text style={[styles.stateText, { color: colors.error }]}>{t('common.loadingError')}</Text>
+          <Pressable
+            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              void refetchSurveyStatus();
+            }}
+          >
+            <Text style={[styles.primaryButtonLabel, { color: colors.textOnPrimary ?? colors.text }]}>
+              {t('common.retry')}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.secondaryButton, { borderColor: colors.border, backgroundColor: colors.backgroundSecondary }]}
+            onPress={() => {
+              void logout('user_initiated');
+            }}
+          >
+            <Text style={[styles.secondaryButtonLabel, { color: colors.text }]}>{t('auth.logout')}</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    // Fallback: no data, not loading, not error (shouldn't normally happen)
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.stateText, { color: colors.textSecondary }]}>{t('common.loading')}</Text>
       </View>
     );
   }
 
-  if (isSurveyStatusError || !surveyStatus) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <Text style={[styles.stateText, { color: colors.error }]}>{t('common.loadingError')}</Text>
-        <Pressable
-          style={[styles.primaryButton, { backgroundColor: colors.primary }]}
-          onPress={() => {
-            void refetchSurveyStatus();
-          }}
-        >
-          <Text style={[styles.primaryButtonLabel, { color: colors.textOnPrimary ?? colors.text }]}>
-            {t('common.retry')}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.secondaryButton, { borderColor: colors.border, backgroundColor: colors.backgroundSecondary }]}
-          onPress={() => {
-            void logout('user_initiated');
-          }}
-        >
-          <Text style={[styles.secondaryButtonLabel, { color: colors.text }]}>{t('auth.logout')}</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
+  // Survey data is available — keep the navigator stable
   if (!surveyStatus.hasCompletedSurvey) {
     return <MandatorySurveyNavigator />;
   }

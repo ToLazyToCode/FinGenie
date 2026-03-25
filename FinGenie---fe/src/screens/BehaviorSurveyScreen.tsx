@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -94,6 +94,9 @@ export function BehaviorSurveyScreen() {
   const startSurveyMutation = useStartSurvey();
   const submitSurveyMutation = useSubmitSurvey();
 
+  // Guard against multiple navigateToHome() calls
+  const hasNavigatedHomeRef = useRef(false);
+
   const questions = useMemo(() => {
     const sections = Array.isArray(surveyDefinition?.sections) ? surveyDefinition.sections : [];
 
@@ -147,11 +150,12 @@ export function BehaviorSurveyScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    if (!surveyStatus) {
+    if (!surveyStatus || hasNavigatedHomeRef.current) {
       return;
     }
 
     if (surveyStatus.hasCompletedSurvey) {
+      hasNavigatedHomeRef.current = true;
       navigateToHome();
     }
   }, [navigateToHome, surveyStatus]);
