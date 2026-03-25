@@ -29,6 +29,7 @@ export function useAdminAuth() {
 
   return {
     token,
+    accessToken: token,
     admin,
     isAuthenticated,
     isLoading,
@@ -36,5 +37,6 @@ export function useAdminAuth() {
     login: handleLogin,
     logout,
     clearError,
+    getAuthHeader: () => ({ Authorization: `Bearer ${token ?? ''}` }),
   };
 }

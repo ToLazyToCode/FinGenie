@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import type { AdminUser, AdminLoginRequest, AdminLoginResponse } from '../types/admin';
 import axios from 'axios';
+import { getApiBaseUrl, API_PREFIX } from '../../api/config';
 
-const ADMIN_BASE_URL = 'http://localhost:8080/api/v1/admin';
+const ADMIN_BASE_URL = `${getApiBaseUrl()}${API_PREFIX}/admin`;
 const TOKEN_KEY = 'admin_access_token';
 const ADMIN_KEY = 'admin_user';
 
