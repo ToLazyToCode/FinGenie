@@ -1,74 +1,53 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useAdminAuthStore } from '../stores/adminAuthStore';
+import { Bell, Search, User } from 'lucide-react';
 
 interface NavbarProps {
-  title?: string;
+  pageTitle: string;
+  adminName: string;
+  collapsed: boolean;
 }
 
-export function Navbar({ title = 'FinGenie Admin' }: NavbarProps) {
-  const { admin, logout } = useAdminAuthStore();
-
+export function Navbar({ pageTitle, adminName, collapsed }: NavbarProps) {
   return (
-    <View style={styles.container}>
-      {/* Brand */}
-      <Text style={styles.brand}>{title}</Text>
+    <div
+      className={`h-16 fixed top-0 right-0 z-30 flex items-center justify-between px-6
+        transition-all duration-300 ease-in-out
+        bg-navy-950/80 backdrop-blur-xl border-b border-white/[0.06]
+        ${collapsed ? 'left-[72px]' : 'left-[240px]'}`}
+    >
+      {/* Left - Page title */}
+      <div className="flex items-center gap-3">
+        <h1 className="text-lg font-semibold text-white tracking-tight">{pageTitle}</h1>
+      </div>
 
-      {/* Right side */}
-      <View style={styles.right}>
-        {admin && (
-          <Text style={styles.adminLabel} numberOfLines={1}>
-            {admin.name || admin.email}
-          </Text>
-        )}
-        <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      {/* Right - Actions */}
+      <div className="flex items-center gap-2">
+        {/* Search */}
+        <button className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.06] transition-all duration-200">
+          <Search className="w-[18px] h-[18px]" />
+        </button>
+
+        {/* Notifications */}
+        <button className="group relative p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.06] transition-all duration-200">
+          <Bell className="w-[18px] h-[18px]" />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-navy-950 group-hover:animate-ping" />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-navy-950" />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-7 bg-white/[0.06] mx-2" />
+
+        {/* Admin profile */}
+        <button className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.04] transition-all duration-200">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/20 flex items-center justify-center">
+            <User className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-sm font-medium text-white leading-tight">{adminName}</span>
+            <span className="text-[10px] text-slate-500 leading-tight font-medium">Administrator</span>
+          </div>
+        </button>
+      </div>
+    </div>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    height: 56,
-    backgroundColor: '#1e293b',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-    // Web shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  brand: {
-    color: '#f1f5f9',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  right: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  adminLabel: {
-    color: '#94a3b8',
-    fontSize: 13,
-    maxWidth: 160,
-  },
-  logoutBtn: {
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  logoutText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-});
