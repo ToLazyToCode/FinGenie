@@ -4,3 +4,11 @@
 *.sln
 .opencode
 .beads
+
+# logs & temp
+*.log
+nul
+admin-login.png
+fingenie-admin/
+__pycache__/
+*.pyc
