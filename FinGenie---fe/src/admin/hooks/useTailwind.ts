@@ -186,6 +186,10 @@ function injectExtras() {
       html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: transparent; }
       html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
       html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+      /* ── Fix Expo default white background bleeding through ── */
+      html, body { background-color: #070b14 !important; margin: 0; padding: 0; }
+      #root { width: 100% !important; }
     `;
     document.head.appendChild(style);
   }

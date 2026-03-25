@@ -85,7 +85,8 @@ export function AdminLayout() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto bg-navy-950 font-sans text-slate-300 admin-scroll">
+    <div className="h-screen w-screen overflow-y-auto bg-[#070b14] font-sans text-slate-300 admin-scroll"
+         style={{ minWidth: '100vw' }}>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -127,8 +128,8 @@ export function AdminLayout() {
 
       {/* Main content area with page transition */}
       <main
-        className={`pt-16 min-h-screen transition-all duration-300 ease-in-out
-          ${collapsed ? 'ml-[72px]' : 'ml-[240px]'}`}
+        className={`pt-16 min-h-screen bg-[#070b14] transition-all duration-300 ease-in-out
+          ${collapsed ? 'ml-[72px] w-[calc(100vw-72px)]' : 'ml-[240px] w-[calc(100vw-240px)]'}`}
       >
         <div key={activePage} className="p-6 page-enter">
           {currentPage}

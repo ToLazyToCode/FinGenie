@@ -138,9 +138,15 @@ export function statusColor(status: string): { bg: string; text: string; dot: st
 export const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString('vi-VN');
 export const fmtMoney = (n: number | null | undefined) => {
   const v = n ?? 0;
-  return v >= 1_000_000_000 ? `₫${(v / 1_000_000_000).toFixed(1)}B`
-    : v >= 1_000_000 ? `₫${(v / 1_000_000).toFixed(1)}M`
-      : `₫${fmt(v)}`;
+  if (v >= 1_000_000_000) {
+    const b = (v / 1_000_000_000).toFixed(1);
+    return b + ' ty VND';
+  }
+  if (v >= 1_000_000) {
+    const m = (v / 1_000_000).toFixed(1);
+    return m + ' tr VND';
+  }
+  return new Intl.NumberFormat('vi-VN').format(v) + ' VND';
 };
 export const fmtPct = (n: number | null | undefined, mult = 1) => ((n ?? 0) * mult).toFixed(1);
 export const fmtDate = (d: string | null | undefined) => {
